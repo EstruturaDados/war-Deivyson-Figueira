@@ -13,43 +13,119 @@
 // - Foco em: Design de software, modularização, const correctness, lógica de jogo.
 //
 // ============================================================================
-
-// Inclusão das bibliotecas padrão necessárias para entrada/saída, alocação de memória, manipulação de strings e tempo.
+#include <stdio.h>
+#include <sdtlib.h>
+#include <string.h>
 
 // --- Constantes Globais ---
-// Definem valores fixos para o número de territórios, missões e tamanho máximo de strings, facilitando a manutenção.
+// Define o número máximo de territórios e os tamanhos dos arrays de caracteres.
+#define NUM_TERRITORIOS_MAX 5
+#define TAM_NOME 30
+#define TAM_COR 10
 
-// --- Estrutura de Dados ---
-// Define a estrutura para um território, contendo seu nome, a cor do exército que o domina e o número de tropas.
+// --- Definição da Estrutura (struct) ---
+// Agrupa as informações de um território: nome, cor do exército e número de tropas.
+typedef struct {
+    char nome[TAM_NOME];
+    char cor[TAM_COR];
+    int tropas;
+} Territorio;
 
-// --- Protótipos das Funções ---
-// Declarações antecipadas de todas as funções que serão usadas no programa, organizadas por categoria.
-// Funções de setup e gerenciamento de memória:
-// Funções de interface com o usuário:
-// Funções de lógica principal do jogo:
-// Função utilitária:
+// --- Função para limpar o buffer de entrada ---
+// Garante que a entrada de dados do teclado não cause problemas em leituras futuras.
+void limparBufferEntrada() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
 
 // --- Função Principal (main) ---
-// Função principal que orquestra o fluxo do jogo, chamando as outras funções em ordem.
+// Orquestra o fluxo do programa através de um menu interativo.
 int main() {
-    // 1. Configuração Inicial (Setup):
-    // - Define o locale para português.
-    // - Inicializa a semente para geração de números aleatórios com base no tempo atual.
-    // - Aloca a memória para o mapa do mundo e verifica se a alocação foi bem-sucedida.
-    // - Preenche os territórios com seus dados iniciais (tropas, donos, etc.).
-    // - Define a cor do jogador e sorteia sua missão secreta.
+    // Declara um vetor estático para armazenar os territórios.
+    Territorio mapa[NUM_TERRITORIOS_MAX];
 
-    // 2. Laço Principal do Jogo (Game Loop):
-    // - Roda em um loop 'do-while' que continua até o jogador sair (opção 0) ou vencer.
-    // - A cada iteração, exibe o mapa, a missão e o menu de ações.
-    // - Lê a escolha do jogador e usa um 'switch' para chamar a função apropriada:
-    //   - Opção 1: Inicia a fase de ataque.
-    //   - Opção 2: Verifica se a condição de vitória foi alcançada e informa o jogador.
-    //   - Opção 0: Encerra o jogo.
-    // - Pausa a execução para que o jogador possa ler os resultados antes da próxima rodada.
+    int opcao;
+    int totalTerritorios = 0;
 
-    // 3. Limpeza:
-    // - Ao final do jogo, libera a memória alocada para o mapa para evitar vazamentos de memória.
+    // --- Laço Principal do Menu ---
+    do {
+        // Exibe o menu de opções.
+        printf("====================================\n");
+        printf("        DESAFIO WAR - NOVATO\n");
+        printf("====================================\n");
+        printf("1 - Cadastrar novo territorio\n");
+        printf("2 - Listar todos os territorios\n");
+        printf("0 - Sair\n");
+        printf("------------------------------------\n");
+        printf("Escolha uma opcao: ");
+
+        scanf("%d", &opcao);
+        limparBufferEntrada();
+
+        // --- Processamento das Opções ---
+        switch (opcao) {
+            case 1: // CADASTRO DE TERRITÓRIO
+                printf("\n--- Cadastro de Novo Territorio ---\n\n");
+                
+                if (totalTerritorios < NUM_TERRITORIOS_MAX) {
+                    // Laço 'for' para preencher os dados dos 5 territórios.
+                    for (int i = 0; i < NUM_TERRITORIOS_MAX; i++) {
+                        printf("Territorio %d:\n", i + 1);
+                        
+                        printf("  Nome (sem espacos): ");
+                        scanf("%s", mapa[i].nome);
+                        
+                        printf("  Cor do exercito: ");
+                        scanf("%s", mapa[i].cor);
+
+                        printf("  Numero de tropas: ");
+                        scanf("%d", &mapa[i].tropas);
+                        
+                        while (getchar() != '\n');
+                        printf("\n");
+                    }
+                    totalTerritorios = NUM_TERRITORIOS_MAX; // Marca como preenchido.
+                    printf("Todos os 5 territorios foram cadastrados com sucesso!\n");
+                } else {
+                    printf("Os territorios ja foram todos cadastrados.\n");
+                }
+                
+                printf("\nPressione Enter para continuar...");
+                getchar();
+                break;
+
+            case 2: // LISTAGEM DE TERRITÓRIOS
+                printf("\n--- Lista de Territorios ---\n\n");
+                
+                if (totalTerritorios == 0) {
+                    printf("Nenhum territorio cadastrado ainda.\n");
+                } else {
+                    // Laço 'for' para exibir os dados de todos os territórios cadastrados.
+                    for (int i = 0; i < totalTerritorios; i++) {
+                        printf("Territorio %d\n", i + 1);
+                        printf("  Nome: %s\n", mapa[i].nome);
+                        printf("  Cor: %s\n", mapa[i].cor);
+                        printf("  Tropas: %d\n", mapa[i].tropas);
+                        printf("------------------------------------\n");
+                    }
+                }
+
+                printf("\nPressione Enter para continuar...");
+                getchar();
+                break;
+
+            case 0: // SAIR
+                printf("\nSaindo do sistema...\n");
+                break;
+
+            default: // Opção Inválida
+                printf("\nOpcao invalida! Tente novamente.\n");
+                printf("\nPressione Enter para continuar...");
+                getchar();
+                break;
+        }
+
+    } while (opcao != 0);
 
     return 0;
 }
