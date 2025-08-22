@@ -14,7 +14,6 @@
 //
 // ============================================================================
 #include <stdio.h>
-#include <sdtlib.h>
 #include <string.h>
 
 // --- Constantes Globais ---
