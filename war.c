@@ -32,19 +32,19 @@ int main() {
     int numTerritorios = 0;
     Territorio* mapa = NULL; // Ponteiro para o array dinâmico
 
-    // --- CADASTRO DE TERRITÓRIOS AUTOMÁTICO AO INICIAR ---
+    // --- CADASTRO INICIAL DOS TERRITÓRIOS ---
     printf("====================================\n");
     printf("         DESAFIO WAR - AVENTUREIRO\n");
     printf("====================================\n");
     printf("\n--- CADASTRO INICIAL ---\n");
-    printf("Por favor digite a quantidade de territórios que serão cadastrados? ");
+    printf("Por favor, digite a quantidade de territórios que serão cadastrados: ");
     if (scanf("%d", &numTerritorios) != 1 || numTerritorios <= 0) {
         printf("Entrada inválida. Encerrando o programa.\n");
         return 1;
     }
     limparBufferEntrada();
 
-    // Alocação dinâmica de memória com calloc
+    // Alocação dinâmica de memória com calloc para inicializar com zero
     mapa = (Territorio*)calloc(numTerritorios, sizeof(Territorio));
     if (mapa == NULL) {
         printf("Erro ao alocar memória. Encerrando o programa.\n");
@@ -54,12 +54,12 @@ int main() {
     cadastrarTerritorios(mapa, numTerritorios);
     printf("\nCadastro concluído!\n");
     
-    // --- LAÇO PRINCIPAL DO JOGO (APÓS O CADASTRO) ---
+    // --- LAÇO PRINCIPAL DO JOGO ---
     do {
         int indiceAtacante, indiceDefensor;
         
         printf("\n--- FASE DE ATAQUE ---\n");
-        // A lista agora é exibida no início de cada rodada para mostrar o estado inicial
+        // A lista é exibida no início de cada rodada para mostrar o estado atual
         listarTerritorios(mapa, numTerritorios);
         
         printf("Escolha o índice do território atacante (1 a %d): ", numTerritorios);
@@ -81,14 +81,9 @@ int main() {
             printf("\nUm território não pode atacar a si mesmo. Tente novamente.\n");
         } else if (strcmp(mapa[indiceAtacante].cor, mapa[indiceDefensor].cor) == 0) {
             printf("\nVocê não pode atacar um território da mesma cor. Tente novamente.\n");
-        } else if (mapa[indiceAtacante].tropas <= 1) {
-            printf("\nO território atacante precisa ter pelo menos 2 tropas para atacar.\n");
         } else {
             // Chamada da função de ataque
             atacar(&mapa[indiceAtacante], &mapa[indiceDefensor]);
-            
-            // Exibe a lista ATUALIZADA após o resultado da batalha
-            listarTerritorios(mapa, numTerritorios);
             
             // Verifica se algum jogador venceu
             if (verificarVitoria(mapa, numTerritorios)) {
@@ -99,7 +94,7 @@ int main() {
             }
         }
 
-        // Ação para continuar ou sair
+        // Opção para continuar ou sair
         printf("\nPressione 'Enter' para continuar ou digite '0' para sair: ");
         char entrada[10];
         if (fgets(entrada, sizeof(entrada), stdin) != NULL) {
@@ -174,47 +169,54 @@ void atacar(Territorio* atacante, Territorio* defensor) {
     
     printf("\n--- Batalha entre %s (%s) e %s (%s) ---\n", atacante->nome, atacante->cor, defensor->nome, defensor->cor);
     printf("Dados sorteados:\n");
-    printf("O Atacante (%s) rolou o dado e tirou %d\n",atacante->nome, dadoAtacante);
-    printf("O Defensor (%s) rolou o dado e tirou %d\n",defensor->nome, dadoDefensor);
+    printf("O atacante (%s) rolou o dado e tirou %d\n", atacante->nome, dadoAtacante);
+    printf("O defensor (%s) rolou o dado e tirou %d\n", defensor->nome, dadoDefensor);
 
-    // Nova lógica para vitória, derrota e empate
+    // Lógica para vitória do atacante
     if (dadoAtacante > dadoDefensor) {
-        printf("\nO atacante (%s) foi um sucesso!\n", atacante->nome);
-
-        if (defensor->tropas > 0) {
-            defensor->tropas--;
-            printf("O defensor (%s) perdeu uma tropa, agora possui %d tropas.\n", defensor->nome, defensor->tropas);
-        }
-
-        if (defensor->tropas <= 0) {
-            // Atacante conquista o território
-            strcpy(defensor->cor, atacante->cor);
-            defensor->tropas = atacante->tropas - 1; // Transfere todas as tropas exceto uma para o território conquistado
-            atacante->tropas = 1; // O atacante fica com apenas 1 tropa no território de origem
-            printf("\nO território de %s foi conquistado por %s!\n", defensor->nome, atacante->nome);
-        } else {
-            // Regra especial: Atacante ganha uma tropa quando vence a batalha
-            atacante->tropas++;
-            printf("O atacante (%s) ganhou uma tropa, agora possui %d tropas.\n", atacante->nome, atacante->tropas);
-        }
-
-    } else if (dadoAtacante < dadoDefensor) {
-        printf("\nO ataque falhou. O atacante (%s) perdeu uma tropa e o defensor (%s) ganhou uma.\n", atacante->nome, defensor->nome);
-        atacante->tropas--;
-        defensor->tropas++;
+        printf("\nO ataque de %s foi um sucesso!\n", atacante->nome);
         
-        // Se o atacante perde a última tropa, o defensor conquista o território
-        if (atacante->tropas <= 0) {
+        // Se o defensor tem mais de uma tropa, há um simples movimento de tropas
+        if (defensor->tropas > 1) {
+            defensor->tropas--;
+            atacante->tropas++;
+            printf("%s perdeu uma tropa, agora possui %d tropas.\n", defensor->nome, defensor->tropas);
+            printf("E %s ganhou uma tropa, agora possui %d tropas.\n", atacante->nome, atacante->tropas);
+        } else {
+            // Conquista do território: defensor fica sem tropas
+            strcpy(defensor->cor, atacante->cor);
+            // Move uma tropa do atacante para o novo território
+            atacante->tropas--;
+            defensor->tropas = 1; 
+            printf("O território de %s foi conquistado por %s!\n", defensor->nome, atacante->nome);
+        }
+    } 
+    // Lógica para derrota do atacante
+    else if (dadoAtacante < dadoDefensor) {
+        printf("\nO ataque falhou. E %s perdeu uma tropa.\n", atacante->nome);
+        
+        // Se o atacante tem mais de uma tropa, há um simples movimento de tropas
+        if (atacante->tropas > 1) {
+            atacante->tropas--;
+            defensor->tropas++;
+            printf("%s perdeu uma tropa, agora possui %d tropas.\n", atacante->nome, atacante->tropas);
+            printf("E %s ganhou uma tropa, agora possui %d tropas.\n", defensor->nome, defensor->tropas);
+        } else {
+            // Conquista do território: atacante fica sem tropas e perde o território para o defensor
             strcpy(atacante->cor, defensor->cor);
-            atacante->tropas = defensor->tropas - 1;
-            defensor->tropas = 1;
-            printf("\nO território de %s foi conquistado por %s!\n", atacante->nome, defensor->nome);
+            // Move uma tropa do defensor para o novo território
+            defensor->tropas--;
+            atacante->tropas = 1;
+            printf("O território de %s foi conquistado por %s!\n", atacante->nome, defensor->nome);
         }
 
-    } else { // Empate
+    } 
+    // Lógica para empate
+    else { 
         printf("\nO ataque resultou em empate. Nenhuma tropa foi perdida ou ganha.\n");
     }
 }
+
 
 /**
  * @brief Rola um dado de 6 faces.
@@ -261,6 +263,6 @@ int verificarVitoria(Territorio* mapa, int numTerritorios) {
     }
 
     // Se todos os territórios tiverem a mesma cor, há um vencedor
-    printf("\nParabéns! O jogador com a cor %s conquistou todos os territórios!\n", corVencedora);
+    printf("\nParabéns! %s venceu a guerra!\n", mapa[0].nome);
     return 1;
 }
